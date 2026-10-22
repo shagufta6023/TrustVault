@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 
 const ShieldIcon = () => (
-  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
     <polyline points="9 12 11 14 15 10"/>
   </svg>
@@ -42,16 +42,84 @@ const UserIcon = () => (
   </svg>
 );
 
+const BuildingIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/>
+    <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/>
+    <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/>
+    <path d="M10 6h4"/>
+    <path d="M10 10h4"/>
+    <path d="M10 14h4"/>
+    <path d="M10 18h4"/>
+  </svg>
+);
+
+const DEMO_ACCOUNTS = [
+  {
+    roleName: 'Administrator (CISO)',
+    name: 'Elena Vance',
+    email: 'admin@trustvault.internal',
+    pass: 'TrustVault2026!',
+    tag: 'admin',
+    desc: 'CISO: Full governance, audit chain inspector, break-glass'
+  },
+  {
+    roleName: 'Document Owner (Finance)',
+    name: 'Marcus Cole',
+    email: 'marcus.cole@trustvault.internal',
+    pass: 'TrustVault2026!',
+    tag: 'owner',
+    desc: 'VP Finance: owns Salary Matrix & SOC2 papers'
+  },
+  {
+    roleName: 'Document Owner (Legal)',
+    name: 'Sarah Jenkins',
+    email: 'sarah.jenkins@trustvault.internal',
+    pass: 'TrustVault2026!',
+    tag: 'owner',
+    desc: 'General Counsel: owns Project Apex M&A Agreement'
+  },
+  {
+    roleName: 'Viewer (External Auditor)',
+    name: 'David Kim',
+    email: 'david.kim@external-audit.com',
+    pass: 'TrustVault2026!',
+    tag: 'viewer',
+    desc: 'EY Senior Auditor: read-only grants on SOC2 & M&A'
+  },
+  {
+    roleName: 'Viewer (Contractor)',
+    name: 'Chloe Bennett',
+    email: 'chloe.bennett@contractor.io',
+    pass: 'TrustVault2026!',
+    tag: 'viewer',
+    desc: 'Engineering Contractor: read-only grant on SOW'
+  }
+];
+
 export default function LoginPage() {
-  const { login, register } = useAuth();
   const [mode, setMode] = useState('login'); // 'login' | 'register'
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  
+  // Login & Register Form fields
+  const [email, setEmail] = useState('admin@trustvault.internal');
+  const [password, setPassword] = useState('TrustVault2026!');
   const [name, setName] = useState('');
+  const [department, setDepartment] = useState('Engineering');
+  const [role, setRole] = useState('viewer');
+  
   const [showPassword, setShowPassword] = useState(false);
+  const [showCredentialsGuide, setShowCredentialsGuide] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  const fillAccount = (account) => {
+    setEmail(account.email);
+    setPassword(account.pass);
+    setMode('login');
+    setError('');
+    setSuccess(`Loaded credentials for ${account.name} (${account.roleName})`);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -64,32 +132,51 @@ export default function LoginPage() {
         const res = await fetch('/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
+          body: JSON.stringify({ email: email.trim(), password })
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.message || 'Invalid credentials');
+        if (!res.ok) throw new Error(data.message || 'Invalid email or password.');
+        
         localStorage.setItem('trustvault_token', data.token);
-        window.location.reload();
+        setSuccess('Authentication successful! Opening vault...');
+        setTimeout(() => window.location.reload(), 400);
       } else {
-        if (!name.trim()) throw new Error('Full name is required');
+        // Registration mode
+        if (!name.trim()) throw new Error('Please enter your Full Name.');
+        if (!email.trim()) throw new Error('Please enter a valid Email Address.');
+        if (!password || password.length < 6) throw new Error('Password must be at least 6 characters long.');
+
         const res = await fetch('/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password, name })
+          body: JSON.stringify({
+            name: name.trim(),
+            email: email.trim(),
+            password,
+            department: department.trim() || 'General',
+            role
+          })
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.message || 'Registration failed');
-        setSuccess('Account created! Signing you in...');
-        // Auto-login after register
-        const loginRes = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
-        });
-        const loginData = await loginRes.json();
-        if (loginRes.ok) {
-          localStorage.setItem('trustvault_token', loginData.token);
-          setTimeout(() => window.location.reload(), 800);
+        if (!res.ok) throw new Error(data.message || 'Registration failed.');
+
+        setSuccess('Account created successfully! Signing you in...');
+        
+        if (data.token) {
+          localStorage.setItem('trustvault_token', data.token);
+          setTimeout(() => window.location.reload(), 600);
+        } else {
+          // Fallback login
+          const loginRes = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email.trim(), password })
+          });
+          const loginData = await loginRes.json();
+          if (loginRes.ok) {
+            localStorage.setItem('trustvault_token', loginData.token);
+            setTimeout(() => window.location.reload(), 600);
+          }
         }
       }
     } catch (err) {
@@ -99,325 +186,515 @@ export default function LoginPage() {
     }
   };
 
-  const fillDemo = (e) => {
-    e.preventDefault();
-    setEmail('admin@trustvault.dev');
-    setPassword('Admin123!');
-    setMode('login');
-  };
-
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'var(--bg-app)',
+      background: 'var(--bg-app, #0a0f1d)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '24px',
+      padding: '32px 16px',
       position: 'relative',
-      overflow: 'hidden',
+      overflowX: 'hidden',
       fontFamily: "'Inter', sans-serif"
     }}>
-      {/* Animated background orbs */}
+      {/* Dynamic ambient background glow */}
       <div style={{
-        position: 'absolute', top: '-20%', left: '-10%',
+        position: 'absolute', top: '-15%', left: '-10%',
+        width: '550px', height: '550px', borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%)',
+        pointerEvents: 'none'
+      }} />
+      <div style={{
+        position: 'absolute', bottom: '-15%', right: '-10%',
         width: '600px', height: '600px', borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(16,185,129,0.08) 0%, transparent 70%)',
-        pointerEvents: 'none'
-      }} />
-      <div style={{
-        position: 'absolute', bottom: '-20%', right: '-10%',
-        width: '500px', height: '500px', borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(139,92,246,0.07) 0%, transparent 70%)',
-        pointerEvents: 'none'
-      }} />
-      <div style={{
-        position: 'absolute', top: '40%', right: '15%',
-        width: '300px', height: '300px', borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(6,182,212,0.05) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(6,182,212,0.10) 0%, transparent 70%)',
         pointerEvents: 'none'
       }} />
 
-      {/* Grid pattern overlay */}
+      {/* Grid Pattern */}
       <div style={{
         position: 'absolute', inset: 0,
         backgroundImage: `
-          linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px)
+          linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px)
         `,
         backgroundSize: '40px 40px',
         pointerEvents: 'none'
       }} />
 
-      {/* Card */}
       <div style={{
-        width: '100%', maxWidth: '440px',
-        background: 'rgba(17, 23, 38, 0.85)',
-        backdropFilter: 'blur(24px)',
-        WebkitBackdropFilter: 'blur(24px)',
-        border: '1px solid rgba(255,255,255,0.08)',
-        borderRadius: '20px',
-        padding: '40px',
-        boxShadow: '0 32px 80px -12px rgba(0,0,0,0.7), 0 0 0 1px rgba(16,185,129,0.05)',
-        animation: 'fadeIn 0.4s ease-out',
-        position: 'relative', zIndex: 1
+        width: '100%',
+        maxWidth: mode === 'login' ? '920px' : '620px',
+        display: 'grid',
+        gridTemplateColumns: mode === 'login' ? 'repeat(auto-fit, minmax(360px, 1fr))' : '1fr',
+        gap: '24px',
+        position: 'relative',
+        zIndex: 1,
+        transition: 'all 0.3s ease'
       }}>
-        {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            width: '72px', height: '72px', borderRadius: '18px',
-            background: 'linear-gradient(135deg, rgba(16,185,129,0.2), rgba(6,182,212,0.1))',
-            border: '1px solid rgba(16,185,129,0.3)',
-            color: 'var(--emerald)',
-            marginBottom: '16px',
-            boxShadow: '0 0 30px rgba(16,185,129,0.15)'
-          }}>
-            <ShieldIcon />
-          </div>
-          <h1 style={{
-            fontSize: '26px', fontWeight: '700', letterSpacing: '-0.5px',
-            background: 'linear-gradient(135deg, #F3F4F6, #94A3B8)',
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
-          }}>
-            TrustVault
-          </h1>
-          <p style={{ color: 'var(--text-dim)', fontSize: '13px', marginTop: '4px' }}>
-            Cryptographic Document Security Platform
-          </p>
-        </div>
 
-        {/* Mode Toggle */}
+        {/* Main Card (Form) */}
         <div style={{
-          display: 'flex', background: 'rgba(0,0,0,0.3)',
-          borderRadius: '10px', padding: '4px', marginBottom: '28px',
-          border: '1px solid var(--border-subtle)'
+          background: 'rgba(17, 24, 39, 0.92)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: '20px',
+          padding: '36px',
+          boxShadow: '0 24px 60px -12px rgba(0,0,0,0.7), 0 0 0 1px rgba(16,185,129,0.1)'
         }}>
-          {['login', 'register'].map((m) => (
+          {/* Logo & Header */}
+          <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              width: '64px', height: '64px', borderRadius: '16px',
+              background: 'linear-gradient(135deg, rgba(16,185,129,0.22), rgba(6,182,212,0.12))',
+              border: '1px solid rgba(16,185,129,0.35)',
+              color: '#10B981',
+              marginBottom: '14px',
+              boxShadow: '0 0 25px rgba(16,185,129,0.2)'
+            }}>
+              <ShieldIcon />
+            </div>
+            <h1 style={{
+              fontSize: '24px', fontWeight: '700', letterSpacing: '-0.5px',
+              background: 'linear-gradient(135deg, #FFFFFF, #94A3B8)',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+              margin: '0 0 4px 0'
+            }}>
+              TrustVault Security Portal
+            </h1>
+            <p style={{ color: '#94A3B8', fontSize: '13px', margin: 0 }}>
+              Zero-Trust Cryptographic Document Storage & Verification
+            </p>
+          </div>
+
+          {/* Mode Switcher Tabs */}
+          <div style={{
+            display: 'flex',
+            background: 'rgba(0,0,0,0.35)',
+            borderRadius: '12px',
+            padding: '4px',
+            marginBottom: '24px',
+            border: '1px solid rgba(255,255,255,0.06)'
+          }}>
             <button
-              key={m}
-              onClick={() => { setMode(m); setError(''); setSuccess(''); }}
+              type="button"
+              onClick={() => { setMode('login'); setError(''); setSuccess(''); }}
               style={{
-                flex: 1, padding: '9px',
-                borderRadius: '7px', fontSize: '14px', fontWeight: '500',
+                flex: 1, padding: '10px 14px',
+                borderRadius: '8px', fontSize: '14px', fontWeight: '600',
                 transition: 'all 0.2s',
-                background: mode === m
-                  ? 'linear-gradient(135deg, rgba(16,185,129,0.25), rgba(6,182,212,0.15))'
+                background: mode === 'login'
+                  ? 'linear-gradient(135deg, rgba(16,185,129,0.25), rgba(6,182,212,0.2))'
                   : 'transparent',
-                color: mode === m ? 'var(--emerald-light)' : 'var(--text-dim)',
-                border: mode === m ? '1px solid rgba(16,185,129,0.3)' : '1px solid transparent',
+                color: mode === 'login' ? '#34D399' : '#94A3B8',
+                border: mode === 'login' ? '1px solid rgba(16,185,129,0.4)' : '1px solid transparent',
                 cursor: 'pointer'
               }}
             >
-              {m === 'login' ? '🔐 Sign In' : '✨ Register'}
+              🔐 Sign In
             </button>
-          ))}
-        </div>
+            <button
+              type="button"
+              onClick={() => {
+                setMode('register');
+                setError('');
+                setSuccess('');
+                if (email === 'admin@trustvault.dev') setEmail('');
+                if (password === 'Admin123!') setPassword('');
+              }}
+              style={{
+                flex: 1, padding: '10px 14px',
+                borderRadius: '8px', fontSize: '14px', fontWeight: '600',
+                transition: 'all 0.2s',
+                background: mode === 'register'
+                  ? 'linear-gradient(135deg, rgba(16,185,129,0.25), rgba(6,182,212,0.2))'
+                  : 'transparent',
+                color: mode === 'register' ? '#34D399' : '#94A3B8',
+                border: mode === 'register' ? '1px solid rgba(16,185,129,0.4)' : '1px solid transparent',
+                cursor: 'pointer'
+              }}
+            >
+              ✨ Create Account
+            </button>
+          </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit}>
-          {/* Name field (register only) */}
+          {/* Step-by-Step Registration Guide Banner */}
           {mode === 'register' && (
+            <div style={{
+              background: 'rgba(16,185,129,0.07)',
+              border: '1px solid rgba(16,185,129,0.25)',
+              borderRadius: '12px',
+              padding: '14px 16px',
+              marginBottom: '20px'
+            }}>
+              <p style={{ margin: '0 0 6px 0', fontSize: '13px', fontWeight: '600', color: '#34D399' }}>
+                📋 How to Register (Things you need to fill):
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '12px', color: '#94A3B8', lineHeight: '1.6' }}>
+                <li><strong style={{ color: '#E2E8F0' }}>Full Name:</strong> Your first and last name</li>
+                <li><strong style={{ color: '#E2E8F0' }}>Email Address:</strong> Valid email for sign-in identification</li>
+                <li><strong style={{ color: '#E2E8F0' }}>Password:</strong> Min. 6 characters for vault encryption</li>
+                <li><strong style={{ color: '#E2E8F0' }}>Department:</strong> Your team (e.g. Engineering, Finance, Legal)</li>
+                <li><strong style={{ color: '#E2E8F0' }}>Role:</strong> Choose <em>Document Owner</em> (to upload) or <em>Viewer</em> (read-only)</li>
+              </ul>
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleSubmit}>
+            {/* Full Name (Registration only) */}
+            {mode === 'register' && (
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#94A3B8', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  1. Full Name <span style={{ color: '#F43F5E' }}>*</span>
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#64748B', display: 'flex' }}>
+                    <UserIcon />
+                  </span>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g. Alex Mercer"
+                    required
+                    style={{
+                      width: '100%', padding: '12px 14px 12px 42px',
+                      background: 'rgba(0,0,0,0.3)',
+                      border: '1px solid rgba(255,255,255,0.12)',
+                      borderRadius: '10px', color: '#F8FAFC',
+                      fontSize: '14px', outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Email Address */}
             <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Full Name
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#94A3B8', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                {mode === 'register' ? '2. Email Address' : 'Email Address'} <span style={{ color: '#F43F5E' }}>*</span>
               </label>
               <div style={{ position: 'relative' }}>
-                <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)', display: 'flex' }}>
-                  <UserIcon />
+                <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#64748B', display: 'flex' }}>
+                  <MailIcon />
                 </span>
                 <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Your full name"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="name@company.com"
                   required
                   style={{
-                    width: '100%', padding: '13px 14px 13px 44px',
+                    width: '100%', padding: '12px 14px 12px 42px',
                     background: 'rgba(0,0,0,0.3)',
-                    border: '1px solid var(--border-medium)',
-                    borderRadius: '10px', color: 'var(--text-main)',
-                    fontSize: '15px', outline: 'none',
-                    transition: 'border-color 0.2s',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    borderRadius: '10px', color: '#F8FAFC',
+                    fontSize: '14px', outline: 'none',
+                    boxSizing: 'border-box'
                   }}
-                  onFocus={(e) => e.target.style.borderColor = 'rgba(16,185,129,0.5)'}
-                  onBlur={(e) => e.target.style.borderColor = 'var(--border-medium)'}
                 />
               </div>
             </div>
-          )}
 
-          {/* Email */}
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Email Address
-            </label>
-            <div style={{ position: 'relative' }}>
-              <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)', display: 'flex' }}>
-                <MailIcon />
-              </span>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@company.com"
-                required
-                style={{
-                  width: '100%', padding: '13px 14px 13px 44px',
-                  background: 'rgba(0,0,0,0.3)',
-                  border: '1px solid var(--border-medium)',
-                  borderRadius: '10px', color: 'var(--text-main)',
-                  fontSize: '15px', outline: 'none',
-                  transition: 'border-color 0.2s',
-                }}
-                onFocus={(e) => e.target.style.borderColor = 'rgba(16,185,129,0.5)'}
-                onBlur={(e) => e.target.style.borderColor = 'var(--border-medium)'}
-              />
-            </div>
-          </div>
+            {/* Department & Role (Registration only) */}
+            {mode === 'register' && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#94A3B8', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    3. Department
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#64748B', display: 'flex' }}>
+                      <BuildingIcon />
+                    </span>
+                    <input
+                      type="text"
+                      value={department}
+                      onChange={(e) => setDepartment(e.target.value)}
+                      placeholder="e.g. Engineering"
+                      style={{
+                        width: '100%', padding: '12px 12px 12px 42px',
+                        background: 'rgba(0,0,0,0.3)',
+                        border: '1px solid rgba(255,255,255,0.12)',
+                        borderRadius: '10px', color: '#F8FAFC',
+                        fontSize: '14px', outline: 'none',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                </div>
 
-          {/* Password */}
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Password
-            </label>
-            <div style={{ position: 'relative' }}>
-              <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)', display: 'flex' }}>
-                <LockIcon />
-              </span>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder={mode === 'register' ? 'Min 8 chars, 1 uppercase, 1 number' : '••••••••'}
-                required
-                style={{
-                  width: '100%', padding: '13px 44px 13px 44px',
-                  background: 'rgba(0,0,0,0.3)',
-                  border: '1px solid var(--border-medium)',
-                  borderRadius: '10px', color: 'var(--text-main)',
-                  fontSize: '15px', outline: 'none',
-                  transition: 'border-color 0.2s',
-                }}
-                onFocus={(e) => e.target.style.borderColor = 'rgba(16,185,129,0.5)'}
-                onBlur={(e) => e.target.style.borderColor = 'var(--border-medium)'}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                style={{
-                  position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)',
-                  background: 'none', border: 'none', color: 'var(--text-dim)',
-                  cursor: 'pointer', display: 'flex', padding: '4px'
-                }}
-              >
-                <EyeIcon open={showPassword} />
-              </button>
-            </div>
-          </div>
-
-          {/* Error / Success */}
-          {error && (
-            <div style={{
-              padding: '12px 14px', borderRadius: '8px', marginBottom: '16px',
-              background: 'rgba(244, 63, 94, 0.1)', border: '1px solid rgba(244,63,94,0.3)',
-              color: '#FB7185', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px'
-            }}>
-              ⚠️ {error}
-            </div>
-          )}
-          {success && (
-            <div style={{
-              padding: '12px 14px', borderRadius: '8px', marginBottom: '16px',
-              background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16,185,129,0.3)',
-              color: 'var(--emerald-light)', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px'
-            }}>
-              ✅ {success}
-            </div>
-          )}
-
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: '100%', padding: '14px',
-              background: loading
-                ? 'rgba(16,185,129,0.3)'
-                : 'linear-gradient(135deg, #10B981, #06B6D4)',
-              border: 'none', borderRadius: '10px',
-              color: '#fff', fontSize: '15px', fontWeight: '600',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              transition: 'all 0.2s',
-              boxShadow: loading ? 'none' : '0 4px 20px rgba(16,185,129,0.35)',
-              letterSpacing: '0.3px'
-            }}
-            onMouseEnter={(e) => { if (!loading) e.target.style.transform = 'translateY(-1px)'; e.target.style.boxShadow = '0 6px 28px rgba(16,185,129,0.45)'; }}
-            onMouseLeave={(e) => { e.target.style.transform = 'translateY(0)'; e.target.style.boxShadow = loading ? 'none' : '0 4px 20px rgba(16,185,129,0.35)'; }}
-          >
-            {loading ? (
-              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                <span style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
-                {mode === 'login' ? 'Authenticating...' : 'Creating Account...'}
-              </span>
-            ) : (
-              mode === 'login' ? '🔐 Sign In Securely' : '✨ Create Account'
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#94A3B8', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    4. Account Role
+                  </label>
+                  <select
+                    value={role}
+                    onChange={(e) => setRole(e.target.value)}
+                    style={{
+                      width: '100%', padding: '12px 14px',
+                      background: 'rgba(0,0,0,0.3)',
+                      border: '1px solid rgba(255,255,255,0.12)',
+                      borderRadius: '10px', color: '#F8FAFC',
+                      fontSize: '14px', outline: 'none',
+                      boxSizing: 'border-box',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <option value="owner" style={{ background: '#111827', color: '#fff' }}>Document Owner (Upload & Share)</option>
+                    <option value="viewer" style={{ background: '#111827', color: '#fff' }}>Viewer (Read shared files)</option>
+                  </select>
+                </div>
+              </div>
             )}
-          </button>
-        </form>
 
-        {/* Demo credentials */}
+            {/* Password */}
+            <div style={{ marginBottom: '22px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <label style={{ fontSize: '12px', fontWeight: '600', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  {mode === 'register' ? '5. Password' : 'Password'} <span style={{ color: '#F43F5E' }}>*</span>
+                </label>
+                {mode === 'register' && (
+                  <span style={{ fontSize: '11px', color: password.length >= 6 ? '#34D399' : '#94A3B8' }}>
+                    {password.length >= 6 ? '✓ Valid length' : 'Min. 6 chars'}
+                  </span>
+                )}
+              </div>
+              <div style={{ position: 'relative' }}>
+                <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#64748B', display: 'flex' }}>
+                  <LockIcon />
+                </span>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={mode === 'register' ? 'Create a secure password (6+ chars)' : 'Enter password'}
+                  required
+                  style={{
+                    width: '100%', padding: '12px 42px 12px 42px',
+                    background: 'rgba(0,0,0,0.3)',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    borderRadius: '10px', color: '#F8FAFC',
+                    fontSize: '14px', outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', color: '#94A3B8',
+                    cursor: 'pointer', display: 'flex', padding: '4px'
+                  }}
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  <EyeIcon open={showPassword} />
+                </button>
+              </div>
+            </div>
+
+            {/* Status Messages */}
+            {error && (
+              <div style={{
+                padding: '12px 14px', borderRadius: '10px', marginBottom: '16px',
+                background: 'rgba(244, 63, 94, 0.12)', border: '1px solid rgba(244,63,94,0.3)',
+                color: '#FB7185', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px'
+              }}>
+                ⚠️ {error}
+              </div>
+            )}
+            {success && (
+              <div style={{
+                padding: '12px 14px', borderRadius: '10px', marginBottom: '16px',
+                background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16,185,129,0.3)',
+                color: '#34D399', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px'
+              }}>
+                ✅ {success}
+              </div>
+            )}
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                width: '100%', padding: '13px',
+                background: loading
+                  ? 'rgba(16,185,129,0.3)'
+                  : 'linear-gradient(135deg, #10B981, #06B6D4)',
+                border: 'none', borderRadius: '10px',
+                color: '#FFFFFF', fontSize: '15px', fontWeight: '600',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s',
+                boxShadow: loading ? 'none' : '0 4px 18px rgba(16,185,129,0.35)',
+                letterSpacing: '0.3px'
+              }}
+            >
+              {loading ? (
+                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                  <span style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
+                  {mode === 'login' ? 'Authenticating...' : 'Creating Account...'}
+                </span>
+              ) : (
+                mode === 'login' ? '🔐 Sign In to Vault' : '✨ Register & Open Vault'
+              )}
+            </button>
+          </form>
+
+          {/* Quick toggle link */}
+          <div style={{ textAlign: 'center', marginTop: '18px' }}>
+            {mode === 'login' ? (
+              <p style={{ fontSize: '13px', color: '#94A3B8', margin: 0 }}>
+                Don't have an account?{' '}
+                <button
+                  onClick={() => { setMode('register'); setError(''); setSuccess(''); }}
+                  style={{ background: 'none', border: 'none', color: '#34D399', fontWeight: '600', cursor: 'pointer', padding: 0 }}
+                >
+                  Register here
+                </button>
+              </p>
+            ) : (
+              <p style={{ fontSize: '13px', color: '#94A3B8', margin: 0 }}>
+                Already registered?{' '}
+                <button
+                  onClick={() => { setMode('login'); setError(''); setSuccess(''); }}
+                  style={{ background: 'none', border: 'none', color: '#34D399', fontWeight: '600', cursor: 'pointer', padding: 0 }}
+                >
+                  Sign in here
+                </button>
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Demo Credentials & Quick 1-Click Access Panel (Visible on login) */}
         {mode === 'login' && (
           <div style={{
-            marginTop: '20px', padding: '14px',
-            background: 'rgba(139,92,246,0.08)',
-            border: '1px solid rgba(139,92,246,0.2)',
-            borderRadius: '10px'
+            background: 'rgba(17, 24, 39, 0.85)',
+            backdropFilter: 'blur(16px)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '20px',
+            padding: '28px',
+            boxShadow: '0 16px 40px -12px rgba(0,0,0,0.5)',
+            display: 'flex',
+            flexDirection: 'column'
           }}>
-            <p style={{ fontSize: '12px', color: 'var(--text-dim)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: '600' }}>
-              🎯 Demo Access
-            </p>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <div>
-                <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-                  <span style={{ color: 'var(--text-dim)' }}>Email: </span>admin@trustvault.dev
-                </p>
-                <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-                  <span style={{ color: 'var(--text-dim)' }}>Pass: </span>Admin123!
+                <h2 style={{ fontSize: '16px', fontWeight: '700', color: '#F1F5F9', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  ⚡ Instant 1-Click Test Personas
+                </h2>
+                <p style={{ fontSize: '12px', color: '#94A3B8', margin: 0 }}>
+                  Click any role below to auto-fill credentials:
                 </p>
               </div>
-              <button
-                onClick={fillDemo}
-                style={{
-                  padding: '7px 14px', fontSize: '12px', fontWeight: '600',
-                  background: 'rgba(139,92,246,0.2)', border: '1px solid rgba(139,92,246,0.4)',
-                  borderRadius: '7px', color: '#A78BFA', cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}
-                onMouseEnter={(e) => e.target.style.background = 'rgba(139,92,246,0.35)'}
-                onMouseLeave={(e) => e.target.style.background = 'rgba(139,92,246,0.2)'}
-              >
-                Fill →
-              </button>
+              <span style={{ fontSize: '11px', background: 'rgba(16,185,129,0.15)', color: '#34D399', padding: '3px 8px', borderRadius: '6px', fontWeight: '600' }}>
+                Pre-configured
+              </span>
+            </div>
+
+            {/* List of 1-click accounts */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', overflowY: 'auto', maxHeight: '420px', paddingRight: '4px' }}>
+              {DEMO_ACCOUNTS.map((acc, idx) => {
+                const isSelected = email === acc.email;
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => fillAccount(acc)}
+                    style={{
+                      padding: '12px 14px',
+                      borderRadius: '10px',
+                      background: isSelected ? 'rgba(16,185,129,0.14)' : 'rgba(255,255,255,0.03)',
+                      border: isSelected ? '1px solid rgba(16,185,129,0.4)' : '1px solid rgba(255,255,255,0.06)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: '12px'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.07)';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+                    }}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+                        <span style={{ fontSize: '13px', fontWeight: '600', color: '#F1F5F9' }}>
+                          {acc.name}
+                        </span>
+                        <span style={{
+                          fontSize: '10px',
+                          fontWeight: '600',
+                          textTransform: 'uppercase',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          background: acc.tag === 'admin' ? 'rgba(239,68,68,0.2)' : acc.tag === 'owner' ? 'rgba(59,130,246,0.2)' : 'rgba(16,185,129,0.2)',
+                          color: acc.tag === 'admin' ? '#F87171' : acc.tag === 'owner' ? '#60A5FA' : '#34D399'
+                        }}>
+                          {acc.tag}
+                        </span>
+                      </div>
+                      <p style={{ margin: '0 0 2px 0', fontSize: '12px', color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {acc.email}
+                      </p>
+                      <p style={{ margin: 0, fontSize: '11px', color: '#64748B' }}>
+                        Password: <code style={{ color: '#E2E8F0', background: 'rgba(0,0,0,0.3)', padding: '1px 4px', borderRadius: '4px' }}>{acc.pass}</code>
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        fillAccount(acc);
+                      }}
+                      style={{
+                        padding: '6px 12px',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        borderRadius: '6px',
+                        background: isSelected ? '#10B981' : 'rgba(255,255,255,0.08)',
+                        color: isSelected ? '#064E3B' : '#CBD5E1',
+                        border: 'none',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      {isSelected ? '✓ Selected' : 'Fill →'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Note about Evaluator Switcher */}
+            <div style={{
+              marginTop: '16px',
+              padding: '12px',
+              borderRadius: '8px',
+              background: 'rgba(99,102,241,0.08)',
+              border: '1px solid rgba(99,102,241,0.2)',
+              fontSize: '11px',
+              color: '#A5B4FC',
+              lineHeight: '1.5'
+            }}>
+              💡 <strong>Evaluator Tip:</strong> Once logged in, you can also switch between any of these personas instantly via the top navigation bar without logging out!
             </div>
           </div>
         )}
-
-        {/* Security note */}
-        <p style={{
-          textAlign: 'center', fontSize: '11px', color: 'var(--text-dim)',
-          marginTop: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px'
-        }}>
-          🔒 AES-256-GCM encrypted · Zero-trust architecture · Tamper-evident audit trail
-        </p>
       </div>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes spin { to { transform: rotate(360deg); } }
-        input::placeholder { color: #4B5563; }
-        input:-webkit-autofill { -webkit-box-shadow: 0 0 0 30px #111726 inset !important; -webkit-text-fill-color: #F3F4F6 !important; }
       `}</style>
     </div>
   );

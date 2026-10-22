@@ -23,7 +23,10 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Security Middleware: Helmet with hardened headers
+// Enable reverse proxy trust (for Cloudflare tunnels, localhost.run, nginx, etc.)
+app.set('trust proxy', 1);
+
+// Security Middleware: Helmet with hardened headers compatible with public tunnels
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -31,16 +34,16 @@ app.use(helmet({
       scriptSrc: ["'self'", "'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:"],
-      connectSrc: ["'self'"],
-      frameAncestors: ["'none'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "https:", "http:", "wss:", "ws:"],
+      frameAncestors: ["'self'"],
     }
   },
   crossOriginEmbedderPolicy: false,
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-// CORS Configuration
+// CORS Configuration - Allows public tunnels and custom domains
 app.use(cors({
   origin: true,
   credentials: true,
@@ -48,17 +51,18 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-TrustVault-BreakGlass']
 }));
 
-app.use(express.json({ limit: '2mb' }));
-app.use(express.urlencoded({ extended: true, limit: '2mb' }));
+app.use(express.json({ limit: '25mb' }));
+app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 app.use(extractClientInfo);
 
-// Basic IP rate limiting in-memory store
+// Basic IP rate limiting in-memory store (scoped to /api routes to prevent static asset throttle)
 const rateLimitMap = new Map();
 const RATE_LIMIT_WINDOW_MS = 60000;
-const RATE_LIMIT_MAX = 300;
+const RATE_LIMIT_MAX = 1000;
 
-app.use((req, res, next) => {
-  const ip = req.clientIp || '127.0.0.1';
+app.use('/api', (req, res, next) => {
+  if (req.path === '/health') return next();
+  const ip = req.clientIp || req.ip || '127.0.0.1';
   const now = Date.now();
   const entry = rateLimitMap.get(ip) || { count: 0, resetTime: now + RATE_LIMIT_WINDOW_MS };
 

@@ -26,11 +26,12 @@ export async function seedDatabase(customDb = null) {
   const passwordHash = await bcrypt.hash('TrustVault2026!', 10);
   const now = new Date().toISOString();
 
-  // 1. Seed Users
+  // 1. Seed Users (5 Standard Members)
   const users = [
     {
       id: 'usr_admin_elena',
       email: 'admin@trustvault.internal',
+      hash: passwordHash,
       name: 'Elena Vance',
       role: 'admin',
       department: 'Security & Compliance'
@@ -38,6 +39,7 @@ export async function seedDatabase(customDb = null) {
     {
       id: 'usr_owner_marcus',
       email: 'marcus.cole@trustvault.internal',
+      hash: passwordHash,
       name: 'Marcus Cole',
       role: 'owner',
       department: 'Finance'
@@ -45,6 +47,7 @@ export async function seedDatabase(customDb = null) {
     {
       id: 'usr_owner_sarah',
       email: 'sarah.jenkins@trustvault.internal',
+      hash: passwordHash,
       name: 'Sarah Jenkins',
       role: 'owner',
       department: 'Legal'
@@ -52,6 +55,7 @@ export async function seedDatabase(customDb = null) {
     {
       id: 'usr_viewer_david',
       email: 'david.kim@external-audit.com',
+      hash: passwordHash,
       name: 'David Kim',
       role: 'viewer',
       department: 'External Audit'
@@ -59,6 +63,7 @@ export async function seedDatabase(customDb = null) {
     {
       id: 'usr_viewer_chloe',
       email: 'chloe.bennett@contractor.io',
+      hash: passwordHash,
       name: 'Chloe Bennett',
       role: 'viewer',
       department: 'Engineering Contractor'
@@ -71,7 +76,7 @@ export async function seedDatabase(customDb = null) {
   `);
 
   for (const u of users) {
-    insertUser.run(u.id, u.email, passwordHash, u.name, u.role, u.department, now);
+    insertUser.run(u.id, u.email, u.hash || passwordHash, u.name, u.role, u.department, now);
   }
 
   // 2. Seed Genesis Audit Log
@@ -114,7 +119,7 @@ trailer << /Root 1 0 R >>
     },
     {
       id: 'doc_mna_apex_2026',
-      title: 'Project Apex — M&A Confidential Purchase Agreement',
+      title: 'Project Apex — M&A Confidential Purchase',
       description: 'Definitive acquisition term sheet and bilateral non-disclosure agreement.',
       category: 'legal',
       classification: 'strictly_restricted',
@@ -128,6 +133,46 @@ trailer << /Root 1 0 R >>
 CONFIDENTIAL: Acquisition of Target Corp for $42,500,000 in cash and stock.
 Mutual covenants and indemnification obligations detailed herein.
 endstream endobj
+trailer << /Root 1 0 R >>
+%%EOF`
+    },
+    {
+      id: 'doc_q3_financial',
+      title: 'Q3 Financial Performance Report',
+      description: 'Revenue, expenses, and profit margin analysis for Q3 2026.',
+      category: 'financial',
+      classification: 'confidential',
+      owner_id: 'usr_owner_marcus',
+      fileName: 'q3_financial_performance_report.pdf',
+      mimeType: 'application/pdf',
+      textContent: `%PDF-1.4
+% Q3 Financial Performance Report
+1 0 obj << /Title (Q3 Financial Report) /Author (Marcus Cole) >> endobj
+2 0 obj << /Length 75 >> stream
+CONFIDENTIAL: Q3 Financial Performance Report - Revenue $18.4M (+24% YoY).
+Gross margin 78.5%, Net income $4.2M.
+endstream endobj
+xref
+trailer << /Root 1 0 R >>
+%%EOF`
+    },
+    {
+      id: 'doc_employee_records',
+      title: 'Employee Records & Payroll',
+      description: 'Employee details, salary structure and benefits information.',
+      category: 'human_resources',
+      classification: 'internal',
+      owner_id: 'usr_owner_marcus',
+      fileName: 'employee_records_payroll_2026.pdf',
+      mimeType: 'application/pdf',
+      textContent: `%PDF-1.4
+% Employee Records & Payroll
+1 0 obj << /Title (Employee Records) /Author (Marcus Cole) >> endobj
+2 0 obj << /Length 65 >> stream
+INTERNAL USE ONLY: Employee Directory & Payroll Disbursals.
+Total headcount: 142. Next pay cycle: Nov 1, 2026.
+endstream endobj
+xref
 trailer << /Root 1 0 R >>
 %%EOF`
     },
