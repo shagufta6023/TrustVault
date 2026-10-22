@@ -9,7 +9,7 @@ TrustVault solves the two most expensive vulnerabilities in corporate document m
 
 ## Live Public URL
 
-**Direct Live URL**: [https://9ff2171e784099.lhr.life](https://9ff2171e784099.lhr.life)
+**Direct Live URL**: https://f8bb7eb6e925c8.lhr.life/
 
 *(Opens directly in any browser with zero passwords or verification screens).*
 
