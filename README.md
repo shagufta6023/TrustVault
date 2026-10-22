@@ -9,9 +9,9 @@ TrustVault solves the two most expensive vulnerabilities in corporate document m
 
 ## Live Public URL
 
-**Live URL**: [https://stupid-ears-watch.loca.lt](https://stupid-ears-watch.loca.lt)
+**Direct Live URL**: [https://9ff2171e784099.lhr.life](https://9ff2171e784099.lhr.life)
 
-*(If prompted for a Tunnel Password on your first visit, enter your public IP: `103.168.81.33` and click "Click to Submit" to view the live vault).*
+*(Opens directly in any browser with zero passwords or verification screens).*
 
 ---
 
