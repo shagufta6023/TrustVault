@@ -7,7 +7,15 @@ TrustVault solves the two most expensive vulnerabilities in corporate document m
 
 ---
 
-## Live Demo & Default Evaluation Credentials
+## Live Public URL
+
+**Live URL**: [https://tall-books-follow.loca.lt](https://tall-books-follow.loca.lt)
+
+*(If prompted for a Tunnel Password on your first visit, enter your public IP: `103.168.81.33` and click "Click to Submit" to view the live vault).*
+
+---
+
+## Default Evaluation Credentials
 
 All demo accounts use the standard password: `TrustVault2026!`
 
