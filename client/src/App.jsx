@@ -5,6 +5,7 @@ import DocumentsView from './components/DocumentsView';
 import AuditTrailView from './components/AuditTrailView';
 import AdminDashboardView from './components/AdminDashboardView';
 import SecurityPlaygroundModal from './components/SecurityPlaygroundModal';
+import LoginPage from './components/LoginPage';
 
 function MainApp() {
   const { user, token, loading } = useAuth();
@@ -39,11 +40,21 @@ function MainApp() {
         alignItems: 'center',
         justifyContent: 'center',
         background: 'var(--bg-app)',
-        color: 'var(--text-dim)'
+        color: 'var(--text-dim)',
+        flexDirection: 'column',
+        gap: '16px',
+        fontFamily: "'Inter', sans-serif"
       }}>
-        Initializing Cryptographic TrustVault...
+        <div style={{ width: '36px', height: '36px', border: '3px solid rgba(16,185,129,0.2)', borderTopColor: '#10B981', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+        <span style={{ fontSize: '14px' }}>Initializing TrustVault...</span>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
+  }
+
+  // Show login if no authenticated user
+  if (!user) {
+    return <LoginPage />;
   }
 
   return (

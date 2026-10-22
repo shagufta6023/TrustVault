@@ -12,8 +12,6 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     async function loadMe() {
       if (!token) {
-        // Default to Marcus Cole (Document Owner) for immediate interactive demo
-        await switchPersona('usr_owner_marcus');
         setLoading(false);
         return;
       }
