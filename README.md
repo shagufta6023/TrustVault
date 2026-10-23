@@ -7,12 +7,16 @@ TrustVault solves the two most expensive vulnerabilities in corporate document m
 
 ---
 
-## Live Public URL
+## 🌐 Live URLs
 
-- **Primary Cloudflare Live URL**: [https://exams-killing-pubs-dave.trycloudflare.com](https://exams-killing-pubs-dave.trycloudflare.com)
-- **Local Server**: [http://localhost:5000](http://localhost:5000)
+| Environment | URL |
+|---|---|
+| **🟢 Public (Render)** | [https://trustvault-app-2026.onrender.com](https://trustvault-app-2026.onrender.com) |
+| **💻 Local Development** | [http://localhost:5000](http://localhost:5000) |
 
-*(Opens directly in any desktop or mobile browser with zero passwords or verification screens).*
+*(Opens directly in any desktop or mobile browser with zero setup required — no passwords or verification screens to access the demo).*
+
+> **Note:** The public URL runs on Render's free tier. First visit after 15 min idle may take ~30 seconds to wake up (cold start).
 
 ---
 
