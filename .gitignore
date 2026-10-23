@@ -11,6 +11,7 @@ client/dist/
 
 # Runtime storage (recreated via seed on each deploy)
 server/storage/
+*.db
 *.db-journal
 *.db-wal
 *.db-shm
