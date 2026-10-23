@@ -9,8 +9,8 @@ TrustVault solves the two most expensive vulnerabilities in corporate document m
 
 ## Live Public URL
 
-- **Primary Cloudflare Live URL**: [https://incredible-automated-criticism-walked.trycloudflare.com](https://incredible-automated-criticism-walked.trycloudflare.com)
-- **Backup SSH Live URL**: [https://608277445ec113.lhr.life](https://608277445ec113.lhr.life)
+- **Primary Cloudflare Live URL**: [https://exams-killing-pubs-dave.trycloudflare.com](https://exams-killing-pubs-dave.trycloudflare.com)
+- **Local Server**: [http://localhost:5000](http://localhost:5000)
 
 *(Opens directly in any desktop or mobile browser with zero passwords or verification screens).*
 
