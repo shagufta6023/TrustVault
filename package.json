@@ -6,15 +6,19 @@
   "type": "module",
   "scripts": {
     "start": "node server/src/index.js",
+    "start:prod": "node server/src/db/seed.js && node server/src/index.js",
     "dev": "node --watch server/src/index.js",
     "client": "npm --prefix client run dev",
-    "build": "npm --prefix client run build",
+    "build": "npm --prefix client install && npm --prefix client run build",
     "seed": "node server/src/db/seed.js",
     "test": "vitest run"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^13.0.3",

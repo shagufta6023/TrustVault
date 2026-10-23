@@ -9,7 +9,7 @@ client/node_modules/
 # Build output
 client/dist/
 
-# Runtime storage & database (recreated via seed)
+# Runtime storage (recreated via seed on each deploy)
 server/storage/
 *.db-journal
 *.db-wal

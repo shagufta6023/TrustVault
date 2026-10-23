@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: trustvault
+    runtime: node
+    region: oregon
+    plan: free
+    rootDir: .
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DB_PATH
+        value: /opt/render/project/src/server/trustvault.db
+      - key: STORAGE_DIR
+        value: /opt/render/project/src/server/storage/encrypted
+      - key: JWT_SECRET
+        generateValue: true
+      - key: VAULT_MASTER_KEY
+        generateValue: true
+      - key: AUDIT_HMAC_SECRET
+        generateValue: true
+      - key: EPHEMERAL_TICKET_TTL_SECONDS
+        value: 60
+      - key: MAX_UPLOAD_SIZE_BYTES
+        value: 26214400
+      - key: RATE_LIMIT_WINDOW_MS
+        value: 60000
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: 300

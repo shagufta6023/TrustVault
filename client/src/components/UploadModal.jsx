@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { apiUrl } from '../api';
 import {
   X,
   UploadCloud,
@@ -44,7 +45,7 @@ export default function UploadModal({ onClose, onSuccess }) {
     formData.append('classification', classification);
 
     try {
-      const res = await fetch('/api/documents/upload', {
+      const res = await fetch(apiUrl('/api/documents/upload'), {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData

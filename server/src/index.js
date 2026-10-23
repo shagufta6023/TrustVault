@@ -132,10 +132,11 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start Server if directly executed
+// Start Server if directly executed (covers both local dev and Render production)
 if (process.argv[1] && process.argv[1].endsWith('index.js')) {
-  app.listen(PORT, () => {
-    console.log(`[TrustVault] Server running securely on http://localhost:${PORT}`);
+  const HOST = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+  app.listen(PORT, HOST, () => {
+    console.log(`[TrustVault] Server running on http://${HOST}:${PORT}`);
     console.log(`[TrustVault] Mode: ${process.env.NODE_ENV || 'development'}`);
   });
 }
